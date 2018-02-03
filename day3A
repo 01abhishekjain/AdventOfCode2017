@@ -1,0 +1,47 @@
+// spiral #.......nbs in spiral..... total nb filled ...... range of movements
+// 1                   1                   1                       0
+// 2                   8                   1+8                     1,2
+// 3                   16                  1+8+16                  2,3,4
+// 4                   32                  1+8+16+32               3,4,5,6
+
+// 129                                                             128...256
+// current spiral # = Math.ceil((num-1)/8) + 1
+
+// 2> 1 2. 1 2. 1 2. 1 2.
+// 3> 3 2 3 4. 3 2 3 4. 3 2 3 4. 3 2 3 4
+// 4> 5 4 3 4 5 6.
+
+// n>  max-1 max-2 max-3 ... min  min+1 min+2 .... max max-1 max-2 ...
+
+function getSpiralNbAndDelta(input) {
+  var n = 1;
+  var nbFilled = 1;
+  do {
+    nbFilled += 8 * n;
+    if (nbFilled >= input) return [n + 1, input - (nbFilled - 8 * n)];
+    else ++n;
+  } while (true);
+}
+
+function calc(spiralNb, delta) {
+  var min = spiralNb - 1;
+  var max = min * 2;
+  var i = 1;
+  var steps = max - 1;
+  var oper = spiralNb > 2 ? "-" : "+";
+  do {
+    if (i === delta) return steps;
+
+    steps = eval(steps + oper + 1);
+    if (steps === min) oper = "+";
+    else if (steps === max) oper = "-";
+
+    i++;
+  } while (steps > 0);
+}
+
+const input = 277678;
+var x = getSpiralNbAndDelta(input);
+
+const output = calc(x[0], x[1]);
+console.log(output);
