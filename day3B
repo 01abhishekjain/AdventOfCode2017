@@ -1,0 +1,122 @@
+const SCREEN_HEIGHT = window.innerHeight;
+const SCREEN_WIDTH = window.innerWidth;
+
+const x0 = SCREEN_WIDTH / 2;
+const y0 = SCREEN_HEIGHT / 2;
+
+let lastX = x0;
+let lastY = y0;
+let direction = "D";
+let counter = 0;
+let lastValue = null;
+calc(277678);
+
+function calc(input) {
+  do {
+    addDot();
+  } while (lastValue < input);
+  console.log(counter + " moves");
+  console.log("Answer is: " + lastValue);
+  return lastValue;
+}
+
+// places a new dot on the spiral
+function addDot() {
+  let div = document.createElement("div");
+
+  const newcoords = getNextCoordinates();
+  div.style.left = newcoords[0] + "px";
+  div.style.top = newcoords[1] + "px";
+
+  div.id = newcoords[0] + "-" + newcoords[1];
+
+  div.dataset.value = getNextValue(newcoords);
+
+  document.body.appendChild(div);
+
+  lastX = newcoords[0];
+  lastY = newcoords[1];
+
+  ++counter;
+
+  lastValue = div.dataset.value;
+}
+
+// returns the coordinates of the new dot to be placed, based on the lastX and lastY
+function getNextCoordinates() {
+  //for the very first dot
+  if (!isDotAt(lastX, lastY)) return [lastX, lastY];
+
+  let tentativeX, tentativeY;
+  switch (direction) {
+    case "R":
+      tentativeX = lastX;
+      tentativeY = lastY - 1;
+      break;
+    case "U":
+      tentativeX = lastX - 1;
+      tentativeY = lastY;
+      break;
+    case "L":
+      tentativeX = lastX;
+      tentativeY = lastY + 1;
+      break;
+    case "D":
+      tentativeX = lastX + 1;
+      tentativeY = lastY;
+      break;
+  }
+
+  // there is no dot at the tentative position, so it means we are 'turning' around the corner
+  if (!isDotAt(tentativeX, tentativeY)) {
+    switch (direction) {
+      case "R":
+        direction = "U";
+        break;
+      case "U":
+        direction = "L";
+        break;
+      case "L":
+        direction = "D";
+        break;
+      case "D":
+        direction = "R";
+        break;
+    }
+    return [tentativeX, tentativeY];
+  } else
+    switch (direction) {
+      case "R":
+        return [lastX + 1, lastY];
+      case "U":
+        return [lastX, lastY - 1];
+      case "L":
+        return [lastX - 1, lastY];
+      case "D":
+        return [lastX, lastY + 1];
+    }
+}
+
+function getNextValue(coords) {
+  const d1 = getValueAt(coords[0] - 1, coords[1] - 1);
+  const d2 = getValueAt(coords[0], coords[1] - 1);
+  const d3 = getValueAt(coords[0] + 1, coords[1] - 1);
+  const d4 = getValueAt(coords[0] - 1, coords[1]);
+  const d5 = getValueAt(coords[0] + 1, coords[1]);
+  const d6 = getValueAt(coords[0] - 1, coords[1] + 1);
+  const d7 = getValueAt(coords[0], coords[1] + 1);
+  const d8 = getValueAt(coords[0] + 1, coords[1] + 1);
+  const sum = d1 + d2 + d3 + d4 + d5 + d6 + d7 + d8;
+  return sum || 1; //let the first dot be 1
+}
+
+function getValueAt(x, y) {
+  return isDotAt(x, y)
+    ? parseInt(document.getElementById(x + "-" + y).dataset.value)
+    : 0;
+}
+
+function isDotAt(x, y) {
+  const el = document.getElementById(x + "-" + y);
+  return !!el;
+}
