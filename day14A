@@ -1,0 +1,165 @@
+// http://adventofcode.com/2017/day/14
+
+// --- Day 14: Disk Defragmentation ---
+// Suddenly, a scheduled job activates the system's disk defragmenter. Were the situation different, you might sit and watch it for a while, but today, you just don't have that kind of time. It's soaking up valuable system resources that are needed elsewhere, and so the only option is to help it finish its task as soon as possible.
+
+// The disk in question consists of a 128x128 grid; each square of the grid is either free or used. On this disk, the state of the grid is tracked by the bits in a sequence of knot hashes.
+
+// A total of 128 knot hashes are calculated, each corresponding to a single row in the grid; each hash contains 128 bits which correspond to individual grid squares. Each bit of a hash indicates whether that square is free (0) or used (1).
+
+// The hash inputs are a key string (your puzzle input), a dash, and a number from 0 to 127 corresponding to the row. For example, if your key string were flqrgnkx, then the first row would be given by the bits of the knot hash of flqrgnkx-0, the second row from the bits of the knot hash of flqrgnkx-1, and so on until the last row, flqrgnkx-127.
+
+// The output of a knot hash is traditionally represented by 32 hexadecimal digits; each of these digits correspond to 4 bits, for a total of 4 * 32 = 128 bits. To convert to bits, turn each hexadecimal digit to its equivalent binary value, high-bit first: 0 becomes 0000, 1 becomes 0001, e becomes 1110, f becomes 1111, and so on; a hash that begins with a0c2017... in hexadecimal would begin with 10100000110000100000000101110000... in binary.
+
+// Continuing this process, the first 8 rows and columns for key flqrgnkx appear as follows, using # to denote used squares, and . to denote free ones:
+
+// ##.#.#..-->
+// .#.#.#.#   
+// ....#.#.   
+// #.#.##.#   
+// .##.#...   
+// ##..#..#   
+// .#...#..   
+// ##.#.##.-->
+// |      |   
+// V      V   
+// In this example, 8108 squares are used across the entire 128x128 grid.
+
+// Given your actual key string, how many squares are used?
+
+// Your puzzle answer was 8230.
+
+window.CP.PenTimer.MAX_TIME_IN_LOOP_WO_EXIT = 10000;
+
+
+console.log(calc('hfdlxzhv'));
+
+function calc(input){
+    const arrayOfBits = [];
+    for (let i = 0; i < 128; i++) {
+        const hash = getHash(input + '-' + i );
+        const bits = getBits(hash);
+        arrayOfBits.push(bits);
+    }
+    
+    const count = getCount(arrayOfBits);
+    return count;
+}
+
+function getCount(arrayOfBits){
+    return arrayOfBits.reduce( (sum, bits)=> {
+        return sum + bits.split('').reduce( (sum, n)=>{ return parseInt(n)===1 ? ++sum : sum },0);
+    } ,0)
+}
+
+function getBits(hash){
+    return hash.split('').map(n=>getBit(n)).join('');
+}
+
+function getBit(n){
+    let hex = parseInt(n+'', 16).toString(2);
+    if(hex.length<4) {
+        hex = 10000 + parseInt(hex);
+        hex = hex+'';
+        hex = hex.substr(1);
+    }
+    return hex;
+}
+
+function getHash(input){
+    const list = [];
+    for (var i = 0; i < 256; i++) {
+      list.push(i);
+    }
+    var sparseHash = getSparseHash(list, input);
+    var denseHash = getDenseHash(sparseHash);
+    var hex = getHex(denseHash);
+    return hex;
+}
+
+function getHex(denseHash){
+    var output = '';
+    for(var i=0; i<16; i++){
+        let hx = denseHash[i].toString(16);
+        if(hx.length===1) hx = '0' + hx;
+        output += hx;
+    }
+    return output;
+}
+
+function getDenseHash(sparseHash){
+    var denseHash = [];
+    for(var i=0; i<256; i+=16){
+        denseHash.push(
+            // lel i dont care
+            sparseHash[i]^sparseHash[i+1]^sparseHash[i+2]^sparseHash[i+3]^
+            sparseHash[i+4]^sparseHash[i+5]^sparseHash[i+6]^sparseHash[i+7]^
+            sparseHash[i+8]^sparseHash[i+9]^sparseHash[i+10]^sparseHash[i+11]^
+            sparseHash[i+12]^sparseHash[i+13]^sparseHash[i+14]^sparseHash[i+15] 
+        );
+    }
+    return denseHash;
+}
+
+function getSparseHash(list, input){
+    input = processInput(input);
+    let pos = (skip = 0);  
+    for (let i = 0; i < 64; i++) {
+        [list, pos, skip] = round(list, input, pos, skip);
+    }
+    return list;
+}
+
+function round(list, input, pos, skip) {
+  for (let i = 0; i < input.length; i++) {
+    [list, pos, skip] = knot(list, input[i], pos, skip);
+  }
+  return [list, pos, skip];
+}
+
+function knot(list, length, pos, skip) {
+  let elements = getElements(list, length, pos);
+  elements = elements.reverse();
+  [list, pos] = fillElements(list, elements, pos);
+  pos = addSkip(list, pos, skip);
+  skip++;
+  return [list, pos, skip];
+}
+
+function getElements(list, length, pos) {
+  const els = [];
+  do {
+    els.push(list[pos]);
+    pos = pos === list.length - 1 ? 0 : pos + 1;
+    --length;
+  } while (length > 0);
+  return els;
+}
+
+function fillElements(list, elements, pos) {
+  let count = 0;
+  do {
+    list[pos] = elements[count];
+    pos = pos === list.length - 1 ? 0 : pos + 1;
+    ++count;
+  } while (count < elements.length);
+  return [list, pos];
+}
+
+function addSkip(list, pos, skip) {
+  while (skip > 0) {
+    pos = pos === list.length - 1 ? 0 : pos + 1;
+    --skip;
+  }
+  return pos;
+}
+
+
+function processInput(input){
+    var output = [];
+    for(var i=0; i<(input?input.length:0); i++){
+        output.push(input[i].charCodeAt());
+    }
+    output = output.concat([17, 31, 73, 47, 23]);
+    return output;
+}
